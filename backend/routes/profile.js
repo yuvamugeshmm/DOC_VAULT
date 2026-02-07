@@ -25,7 +25,67 @@ const upload = multer({
   }
 });
 
-// ... existing GET / route ...
+// Get profile details
+router.get('/', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Update profile details
+router.put('/', auth, async (req, res) => {
+  try {
+    const { name, email, yearOfJoining, dateOfBirth, department, year } = req.body;
+
+    // Find user and update
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update fields if provided
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (yearOfJoining !== undefined) user.yearOfJoining = yearOfJoining;
+    if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+    if (department !== undefined) user.department = department;
+    if (year !== undefined) user.year = year;
+
+    await user.save();
+
+    // Log the action
+    const { logAction } = require('../utils/auditLogger');
+    await logAction(user.studentId, 'update_profile', {
+      updatedFields: Object.keys(req.body)
+    }, req);
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        studentId: user.studentId,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        profilePhoto: user.profilePhoto,
+        yearOfJoining: user.yearOfJoining,
+        dateOfBirth: user.dateOfBirth,
+        department: user.department,
+        year: user.year
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
 
 // Upload profile photo
 router.post('/photo', auth, upload.single('photo'), async (req, res) => {

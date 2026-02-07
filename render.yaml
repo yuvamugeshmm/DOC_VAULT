@@ -1,0 +1,20 @@
+services:
+  # Unified Web Service (Backend + Frontend)
+  - type: web
+    name: student-hub-unified
+    env: node
+    buildCommand: npm run install-all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromConfigVar: mongodb-uri
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://student-hub-unified.onrender.com # Update with final Render URL
+      - key: VITE_API_URL
+        value: https://student-hub-unified.onrender.com/api

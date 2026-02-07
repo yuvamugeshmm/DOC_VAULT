@@ -1,0 +1,45 @@
+═══════════════════════════════════════════════════════════
+  QUICK START - Student Document Store System
+═══════════════════════════════════════════════════════════
+
+STEP 1: Open TWO PowerShell/Terminal windows
+
+STEP 2: In TERMINAL 1 (Backend):
+  cd "C:\Users\yuvam\OneDrive\Desktop\Individual project\backend"
+  npm install
+  npm run dev
+
+  Wait for: "Server running on port 5000" and "MongoDB Connected"
+
+STEP 3: In TERMINAL 2 (Frontend):
+  cd "C:\Users\yuvam\OneDrive\Desktop\Individual project\frontend"
+  npm install
+  npm run dev
+
+  Wait for: "Local: http://localhost:3000/"
+
+STEP 4: Open Browser:
+  Go to: http://localhost:3000
+
+STEP 5: Login:
+  Student: ID=714023205119, Password=student123
+  Admin: ID=admin, Password=admin123
+
+═══════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════
+
+❌ "npm is not recognized"
+   → Install Node.js from nodejs.org
+
+❌ "MongoDB connection error"
+   → Make sure MongoDB is running
+
+❌ "Port already in use"
+   → Close other apps using ports 5000 or 3000
+
+❌ "Login failed"
+   → Check backend is running
+   → Run: cd backend && node scripts/createUser.js
+
+═══════════════════════════════════════════════════════════

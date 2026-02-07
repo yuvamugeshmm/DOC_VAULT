@@ -15,7 +15,7 @@
         "backend": "cd backend && npm start",
         "frontend": "cd frontend && npm run dev"
     },
-    "devDependencies": {
+    "dependencies": {
         "concurrently": "^8.2.1"
     }
 }

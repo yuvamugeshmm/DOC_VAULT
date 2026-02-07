@@ -53,8 +53,8 @@ if (process.env.NODE_ENV === "production" || process.env.SERVE_FRONTEND === "tru
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
-  app.get("*", (req, res) => {
-    // Skip API routes
+  app.get("*", (req, res, next) => {
+    // Skip API routes explicitly
     if (req.path.startsWith("/api/")) return next();
     res.sendFile(path.join(frontendPath, "index.html"));
   });

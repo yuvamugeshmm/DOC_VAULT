@@ -34,24 +34,18 @@ router.post('/upload', auth, upload.single('file'), async (req, res) => {
     }
 
     const studentId = req.user.studentId;
-    const uploadDir = path.join(__dirname, '../uploads', studentId, category.trim());
-    await ensureDirectory(uploadDir);
-
     const filename = generateFilename(req.file.originalname, studentId);
-    const filePath = path.join(uploadDir, filename);
 
-    // Write file to disk
-    await fs.writeFile(filePath, req.file.buffer);
-
-    // Save document metadata
+    // Save document metadata and data to database
     const document = await Document.create({
       studentId,
       filename,
       originalFilename: req.file.originalname,
-      filePath,
+      filePath: 'DATABASE_STORED', // Placeholder for legacy field
       category: category.trim(),
       fileSize: req.file.size,
-      mimeType: req.file.mimetype
+      mimeType: req.file.mimetype,
+      fileData: req.file.buffer
     });
 
     await logAction(studentId, 'upload', {
@@ -148,11 +142,18 @@ router.get('/view/:id', auth, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Check if file exists
-    try {
-      await fs.access(document.filePath);
-    } catch {
-      return res.status(404).json({ error: 'File not found on server' });
+    // Check if file data exists in database or fall back to disk
+    let fileBuffer;
+    if (document.fileData) {
+      fileBuffer = document.fileData;
+    } else {
+      // Fallback to disk for existing files
+      try {
+        await fs.access(document.filePath);
+        fileBuffer = await fs.readFile(document.filePath);
+      } catch {
+        return res.status(404).json({ error: 'File not found on server or database' });
+      }
     }
 
     await logAction(req.user.studentId, 'download', {
@@ -166,7 +167,6 @@ router.get('/view/:id', auth, async (req, res) => {
     res.setHeader('Content-Disposition', `inline; filename="${document.originalFilename}"`);
     res.setHeader('Cache-Control', 'private, max-age=3600');
 
-    const fileBuffer = await fs.readFile(document.filePath);
     res.send(fileBuffer);
   } catch (error) {
     console.error('View error:', error);
@@ -188,11 +188,18 @@ router.get('/download/:id', auth, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Check if file exists
-    try {
-      await fs.access(document.filePath);
-    } catch {
-      return res.status(404).json({ error: 'File not found on server' });
+    // Check if file data exists in database or fall back to disk
+    let fileBuffer;
+    if (document.fileData) {
+      fileBuffer = document.fileData;
+    } else {
+      // Fallback to disk for existing files
+      try {
+        await fs.access(document.filePath);
+        fileBuffer = await fs.readFile(document.filePath);
+      } catch {
+        return res.status(404).json({ error: 'File not found on server or database' });
+      }
     }
 
     await logAction(req.user.studentId, 'download', {
@@ -203,7 +210,6 @@ router.get('/download/:id', auth, async (req, res) => {
     res.setHeader('Content-Type', document.mimeType);
     res.setHeader('Content-Disposition', `attachment; filename="${document.originalFilename}"`);
 
-    const fileBuffer = await fs.readFile(document.filePath);
     res.send(fileBuffer);
   } catch (error) {
     console.error('Download error:', error);
@@ -225,11 +231,13 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Delete file from disk
-    try {
-      await fs.unlink(document.filePath);
-    } catch (error) {
-      console.error('File deletion error:', error);
+    // Delete file from disk if it was stored there
+    if (document.filePath && document.filePath !== 'DATABASE_STORED') {
+      try {
+        await fs.unlink(document.filePath);
+      } catch (error) {
+        console.error('File deletion error:', error);
+      }
     }
 
     await Document.findByIdAndDelete(req.params.id);

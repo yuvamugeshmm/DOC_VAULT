@@ -36,6 +36,10 @@ const documentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
     index: true
+  },
+  fileData: {
+    type: Buffer,
+    required: false // Optional for now to support migration
   }
 });
 

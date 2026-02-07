@@ -71,10 +71,12 @@ router.delete('/documents/:id', async (req, res) => {
     }
 
     const fs = require('fs').promises;
-    try {
-      await fs.unlink(document.filePath);
-    } catch (error) {
-      console.error('File deletion error:', error);
+    if (document.filePath && document.filePath !== 'DATABASE_STORED') {
+      try {
+        await fs.unlink(document.filePath);
+      } catch (error) {
+        console.error('File deletion error:', error);
+      }
     }
 
     await Document.findByIdAndDelete(req.params.id);
@@ -237,7 +239,7 @@ router.delete('/students/:id', async (req, res) => {
 
     for (const doc of documents) {
       try {
-        if (doc.filePath) {
+        if (doc.filePath && doc.filePath !== 'DATABASE_STORED') {
           const absolutePath = path.resolve(doc.filePath);
           await fs.unlink(absolutePath).catch(err => console.error(`Failed to delete file: ${absolutePath}`, err));
         }
@@ -248,8 +250,8 @@ router.delete('/students/:id', async (req, res) => {
 
     await Document.deleteMany({ studentId: user.studentId });
 
-    // 2. Delete profile photo if exists
-    if (user.profilePhoto) {
+    // 2. Delete profile photo if exists on disk
+    if (user.profilePhoto && user.profilePhoto !== 'DATABASE_STORED') {
       try {
         const absolutePhotoPath = path.resolve(user.profilePhoto);
         await fs.unlink(absolutePhotoPath).catch(err => console.error(`Failed to delete profile photo: ${absolutePhotoPath}`, err));
